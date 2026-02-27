@@ -10,7 +10,7 @@
 
 如果您有更复杂或需要保密的问题，可以发送邮件至：
 
-**memscope@outlook.com**
+**<memscope@outlook.com>**
 
 请在邮件中详细描述您的问题或建议，我们会尽快回复。
 
@@ -22,4 +22,4 @@
 
 ## 4. 贡献代码
 
-如果您希望为项目贡献代码，请参考[贡献指南](./development_guide/contributing_guide.md)。
+如果您希望为项目贡献代码，请参考[贡献指南](../development_guide/contributing_guide.md)。

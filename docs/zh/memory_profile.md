@@ -30,6 +30,7 @@ msMemScope工具的安装，请参见[《msMemScope工具安装指南》](./inst
 **Python接口采集**<a id="Python接口采集"></a>
 
 1. 设置环境变量。
+
     执行以下命令，设置LD_PRELOAD和LD_LIBRARY_PATH环境变量。
 
     ```shell
@@ -48,6 +49,7 @@ msMemScope工具的安装，请参见[《msMemScope工具安装指南》](./inst
     |LD_LIBRARY_PATH|LD_LIBRARY_PATH环境变量。|
 
 2. 采集内存。
+
     执行以下示例代码，采集内存事件。需要注意的是，请根据需求自行配置`msmemscope.config`的参数。支持设置device、level、events、call_stack、analysis、watch、output和data_format参数，可根据需求自行设置，具体参数信息可参见[命令行采集功能介绍](#命令行采集功能介绍)。
 
     ```python
@@ -58,6 +60,9 @@ msMemScope工具的安装，请参见[《msMemScope工具安装指南》](./inst
     train()              # train()为用户代码
     msmemscope.stop()    # 退出采集
     ```
+
+    > [!NOTE] 说明  
+    > OOM情况一般会出现在内存采集区间，一旦出现，将会落盘OOM前后的快照信息，落盘的具体信息可参考《输出文件说明》中的“[memscope_dump_{timestamp}.csv文件说明](./output_file_spec.md#memscope_dump_timestampcsv文件说明)”，当Event为SNAPSHOT时，查看Attr字段信息和Call Stack字段信息。
 
 **Python Trace采集**
 
@@ -104,6 +109,14 @@ msMemScope工具的安装，请参见[《msMemScope工具安装指南》](./inst
 **内存快照采集**
 
 支持采集当前系统内的显存分配器快照信息，例如设备总空闲内存、设备当前空闲内存等信息，便于客户高效获取。
+
+内存快照采集功能可通过两种方式开启，方式一为本节的自动开启，方式二为一键分析功能开启，具体操作可参见[一键分析功能介绍](./memory_analysis.md#一键分析功能介绍)。内存快照采集功能支持以下应用场景。
+
+|场景|说明|
+|----|-----|
+|训练|仅可使用本节介绍的方法开启内存快照。|
+|推理|可使用一键分析功能为vLLM推理框架开启内存快照，可一键记录推理过程中的load_weight、profile_run、kv_cache和activate等环节的内存占用。|
+|强化学习|强化学习（verl）涉及推理和训练两个阶段，其中一键分析功能目前仅支持在强化学习的推理过程中开启内存快照；训练过程则可使用本节介绍的方法启用内存快照功能。|
 
 执行以下示例代码，采集内存快照。
 
@@ -188,7 +201,7 @@ msmemscope.stop()  # 退出采集
 
 ### 参数说明
 
-**表 2**  命令行参数说明
+**表 3**  命令行参数说明
 
 |参数|说明|
 |--|--|
@@ -196,7 +209,7 @@ msmemscope.stop()  # 退出采集
 |prog_name|用户脚本名称，请保证自定义脚本的安全性。当开启内存对比功能时不需要输入此参数。|
 |prog_options|用户脚本参数，请保证自定义脚本参数的安全性。当开启内存对比功能时不需要输入此参数。|
 
-**表 3**  参数说明
+**表 4**  参数说明
 
 |参数|说明|是否必选|
 |--|--|--|

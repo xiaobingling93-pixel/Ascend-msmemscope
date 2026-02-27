@@ -1,3 +1,5 @@
+# leaks组件实现设计说明书
+
 ![image](./figures/1a451d58-83b5-4f4d-a09a-0c033012bb18.png)
 
 规划和设计如下功能特性及配套的DFX能力：
@@ -111,232 +113,232 @@ NA
 
 1. 接口描述
 
-```
-框架模块主要有几大功能（接口）：  
-*支持解析linux命令行，生成数据采集和分析配置
-*fork子进程拉起客户脚本
-*提供进程通信接口，包括server的读写功能、client的读写功能、消息组包和解包功能
-*提供消息转发机制，负责将数据采集模块传过来的消息转发给数据分析模块
-```
+   ```tex
+   框架模块主要有几大功能（接口）：  
+   *支持解析linux命令行，生成数据采集和分析配置
+   *fork子进程拉起客户脚本
+   *提供进程通信接口，包括server的读写功能、client的读写功能、消息组包和解包功能
+   *提供消息转发机制，负责将数据采集模块传过来的消息转发给数据分析模块
+   ```
 
 2. 接口清单
 
-```
-接口名：UserCommand Parse(int32_t argc, char **argv)
-接口功能：解析命令行，生成配置。
-接口方向：从命令行输入到框架模块
-输入参数名：命令行参数个数和具体参数取值。
-输出参数名：NA。
-返回值：解析得到的配置，包含需要采集的数据信息以及分析算法。
-注意事项：命令行输入需要符合预先设置的规则，否则会解析失败，流程终止，返回help信息打屏。
-```
+   ```tex
+   接口名：UserCommand Parse(int32_t argc, char **argv)
+   接口功能：解析命令行，生成配置。
+   接口方向：从命令行输入到框架模块
+   输入参数名：命令行参数个数和具体参数取值。
+   输出参数名：NA。
+   返回值：解析得到的配置，包含需要采集的数据信息以及分析算法。
+   注意事项：命令行输入需要符合预先设置的规则，否则会解析失败，流程终止，返回help信息打屏。
+   ```
 
-```
-接口名：void Process::Launch(const std::vector<std::string> &execParams)
-接口功能：fork进程，配合execvpe拉起客户脚本。（在此之前需要设置LD_PRELAOD变量）
-接口方向：框架模块内部重要接口
-输入参数名：客户脚本的命令和入参
-输出参数名：NA。
-返回值：NA。
-注意事项：拉起客户子进程后，主进程进入等待状态，直到子进程自然结束或者异常退出。
-```
+   ```tex
+   接口名：void Process::Launch(const std::vector<std::string> &execParams)
+   接口功能：fork进程，配合execvpe拉起客户脚本。（在此之前需要设置LD_PRELAOD变量）
+   接口方向：框架模块内部重要接口
+   输入参数名：客户脚本的命令和入参
+   输出参数名：NA。
+   返回值：NA。
+   注意事项：拉起客户子进程后，主进程进入等待状态，直到子进程自然结束或者异常退出。
+   ```
 
-```
-接口名：int ServerProcess::Notify(std::size_t clientId, const std::string& msg)
-接口功能：利用共享内存发送数据
-接口方向：从server端到client端
-输入参数名：需要接收数据的client Id，数据包。
-输出参数名：NA。
-返回值：发送的数据包大小（>= 0 发送成功，并且返回值表示实际发送的字节数，<  0 发送失败）。
-注意事项：当发送失败时需要有对应的维测或者重发机制。（ClientProcess有对称的接口，此处不再赘述）
-```
+   ```tex
+   接口名：int ServerProcess::Notify(std::size_t clientId, const std::string& msg)
+   接口功能：利用共享内存发送数据
+   接口方向：从server端到client端
+   输入参数名：需要接收数据的client Id，数据包。
+   输出参数名：NA。
+   返回值：发送的数据包大小（>= 0 发送成功，并且返回值表示实际发送的字节数，<  0 发送失败）。
+   注意事项：当发送失败时需要有对应的维测或者重发机制。（ClientProcess有对称的接口，此处不再赘述）
+   ```
 
-```
-接口名：int ServerProcess::Wait(std::size_t clientId, std::string& msg);
-接口功能：利用共享内存接收数据
-接口方向：从client端到server端
-输入参数名：需要接收数据的client Id，数据包。
-输出参数名：NA。
-返回值：发送的数据包大小（>= 0 接收成功，并且返回值表示实际接收到的字节数，<  0 接收失败）。
-注意事项：当接收失败时需要有对应的维测或者重发机制。（ClientProcess有对称的接口，此处不再赘述）
-```
+   ```tex
+   接口名：int ServerProcess::Wait(std::size_t clientId, std::string& msg);
+   接口功能：利用共享内存接收数据
+   接口方向：从client端到server端
+   输入参数名：需要接收数据的client Id，数据包。
+   输出参数名：NA。
+   返回值：发送的数据包大小（>= 0 接收成功，并且返回值表示实际接收到的字节数，<  0 接收失败）。
+   注意事项：当接收失败时需要有对应的维测或者重发机制。（ClientProcess有对称的接口，此处不再赘述）
+   ```
 
-```
-接口名：void Process::MsgHandle(size_t &clientId, std::string &msg)
-接口功能：对client传给server的数据包进行解包和第一层分发，对于log消息，转发log模块处理，对于记录消息，转发记录处理模块。
-接口方向：从client端到server端
-输入参数名：需要接收数据的client Id，数据包。
-输出参数名：NA。
-返回值：NA。
-注意事项：存在多client并发往server发送消息的情况，因此各个管道的解包缓冲带需要独立，避免相互影响。
-```
+   ```tex
+   接口名：void Process::MsgHandle(size_t &clientId, std::string &msg)
+   接口功能：对client传给server的数据包进行解包和第一层分发，对于log消息，转发log模块处理，对于记录消息，转发记录处理模块。
+   接口方向：从client端到server端
+   输入参数名：需要接收数据的client Id，数据包。
+   输出参数名：NA。
+   返回值：NA。
+   注意事项：存在多client并发往server发送消息的情况，因此各个管道的解包缓冲带需要独立，避免相互影响。
+   ```
 
-```
-接口名：void EventDispatcher::DispatchEvent(std::shared_ptr<EventBase>& event, MemoryState* state)
-接口功能：对client传给server的数据包进第二层分发，专门处理数据记录事件。
-接口方向：从框架模块到分析模块。
-输入参数名：数据记录事件、内存块缓存。
-输出参数名：NA。
-返回值：NA。
-注意事项：仅对注册了的分析器转发对应的event，不注册不转发。
-```
+   ```tex
+   接口名：void EventDispatcher::DispatchEvent(std::shared_ptr<EventBase>& event, MemoryState* state)
+   接口功能：对client传给server的数据包进第二层分发，专门处理数据记录事件。
+   接口方向：从框架模块到分析模块。
+   输入参数名：数据记录事件、内存块缓存。
+   输出参数名：NA。
+   返回值：NA。
+   注意事项：仅对注册了的分析器转发对应的event，不注册不转发。
+   ```
 
-```
-接口名：void EventDispatcher::Subscribe(const SubscriberId& id, const std::vector<EventBaseType>& eventTypes, const Priority& priority, const HandlerFunc& func)
-接口功能：分析器向数据转发模块发送注册接口
-接口方向：从分析模块到框架模块
-输入参数名：本身的分析器id、关注的事件类型、被通知的优先级、回调函数。
-输出参数名：NA。
-返回值：NA。
-注意事项：仅对注册了的分析器转发对应的event，不注册不转发，且转发有优先级，由priority参数控制。
-```
+   ```tex
+   接口名：void EventDispatcher::Subscribe(const SubscriberId& id, const std::vector<EventBaseType>& eventTypes, const Priority& priority, const HandlerFunc& func)
+   接口功能：分析器向数据转发模块发送注册接口
+   接口方向：从分析模块到框架模块
+   输入参数名：本身的分析器id、关注的事件类型、被通知的优先级、回调函数。
+   输出参数名：NA。
+   返回值：NA。
+   注意事项：仅对注册了的分析器转发对应的event，不注册不转发，且转发有优先级，由priority参数控制。
+   ```
 
-```
-接口名：void EventDispatcher::UnSubscribe(const SubscriberId& id)
-接口功能：分析器向数据转发模块发送解注册接口
-接口方向：从分析模块到框架模块
-输入参数名：本身的分析器id
-输出参数名：NA。
-返回值：NA。
-注意事项：NA。
-```
+   ```tex
+   接口名：void EventDispatcher::UnSubscribe(const SubscriberId& id)
+   接口功能：分析器向数据转发模块发送解注册接口
+   接口方向：从分析模块到框架模块
+   输入参数名：本身的分析器id
+   输出参数名：NA。
+   返回值：NA。
+   注意事项：NA。
+   ```
 
 ##### 4.2.5.2 数据采集模块
 
 1. 接口描述
 
-```
-数据采集模块主要有几大功能（接口）：  
-*各个数据采集项的hook接口
-*控制当前系统是否需要采集数据以及采集哪些数据的接口
-*向框架模块上报数据的接口
-```
+   ```tex
+   数据采集模块主要有几大功能（接口）：  
+   *各个数据采集项的hook接口
+   *控制当前系统是否需要采集数据以及采集哪些数据的接口
+   *向框架模块上报数据的接口
+   ```
 
 2. 接口清单
 
-```
-接口名：drvError_t halMemAlloc(void **pp, unsigned long long size, unsigned long long flag);
-drvError_t halMemFree(void *pp);
-接口功能：用于劫持hal层显存分配和使用的接口
-接口方向：driver->工具
-输入参数名：地址、大小以及flag，flag中包含module id、内存属性等信息
-输出参数名：NA。
-返回值：driver的错误码。
-注意事项：NA。
-```
+   ```tex
+   接口名：drvError_t halMemAlloc(void **pp, unsigned long long size, unsigned long long flag);
+   drvError_t halMemFree(void *pp);
+   接口功能：用于劫持hal层显存分配和使用的接口
+   接口方向：driver->工具
+   输入参数名：地址、大小以及flag，flag中包含module id、内存属性等信息
+   输出参数名：NA。
+   返回值：driver的错误码。
+   注意事项：NA。
+   ```
 
-```
-接口名：atb::Status _ZN3atb6Runner7ExecuteERNS_17RunnerVariantPackE(atb::Runner* thisPtr, atb::RunnerVariantPack& runnerVariantPack)
-接口功能：劫持atb op执行接口，获取atb op执行的信息
-接口方向：atb->工具
-输入参数名：runner的实例指针以及op相关的输入输出信息
-输出参数名：NA。
-返回值：atb错误码。
-注意事项：NA。
-```
+   ```tex
+   接口名：atb::Status _ZN3atb6Runner7ExecuteERNS_17RunnerVariantPackE(atb::Runner* thisPtr, atb::RunnerVariantPack& runnerVariantPack)
+   接口功能：劫持atb op执行接口，获取atb op执行的信息
+   接口方向：atb->工具
+   输入参数名：runner的实例指针以及op相关的输入输出信息
+   输出参数名：NA。
+   返回值：atb错误码。
+   注意事项：NA。
+   ```
 
-```
-接口名：void _ZN3atb9StoreUtil15SaveLaunchParamEPvRKN3Mki11LaunchParamERKSs(aclrtStream stream, const Mki::LaunchParam& launchParam, const std::string& dirPath)
-接口功能：劫持atb kernel执行接口，获取atb kernel执行信息
-接口方向：atb->工具
-输入参数名：流状态、算子输入输出等信息、算子信息
-输出参数名：NA。
-返回值：NA。
-注意事项：NA。
-```
+   ```tex
+   接口名：void _ZN3atb9StoreUtil15SaveLaunchParamEPvRKN3Mki11LaunchParamERKSs(aclrtStream stream, const Mki::LaunchParam& launchParam, const std::string& dirPath)
+   接口功能：劫持atb kernel执行接口，获取atb kernel执行信息
+   接口方向：atb->工具
+   输入参数名：流状态、算子输入输出等信息、算子信息
+   输出参数名：NA。
+   返回值：NA。
+   注意事项：NA。
+   ```
 
-```
-接口名：aclError aclInit(const char *configPath)
-aclError aclFinalize()
-接口功能：劫持acl初始化和结束接口
-接口方向：runtime->工具
-输入参数名：acl路径信息
-输出参数名：NA。
-返回值：NA。
-注意事项：NA。
-```
+   ```tex
+   接口名：aclError aclInit(const char *configPath)
+   aclError aclFinalize()
+   接口功能：劫持acl初始化和结束接口
+   接口方向：runtime->工具
+   输入参数名：acl路径信息
+   输出参数名：NA。
+   返回值：NA。
+   注意事项：NA。
+   ```
 
-```
-接口名：rtError_t rtKernelLaunch(const void *stubFunc, uint32_t blockDim, void *args, uint32_t argsSize, rtSmDesc_t *smDesc, rtStream_t stm)
-接口功能：劫持kernellaunch相关的接口（类似的还有几个，此处不再赘述）
-接口方向：runtime->工具
-输入参数名：算子注册函数、blockdim、输出输出信息、流状态等
-输出参数名：runtime错误码。
-返回值：NA。
-注意事项：NA。
-```
+   ```tex
+   接口名：rtError_t rtKernelLaunch(const void *stubFunc, uint32_t blockDim, void *args, uint32_t argsSize, rtSmDesc_t *smDesc, rtStream_t stm)
+   接口功能：劫持kernellaunch相关的接口（类似的还有几个，此处不再赘述）
+   接口方向：runtime->工具
+   输入参数名：算子注册函数、blockdim、输出输出信息、流状态等
+   输出参数名：runtime错误码。
+   返回值：NA。
+   注意事项：NA。
+   ```
 
-```
-接口名：bool EventTraceManager::IsNeedTrace(const RecordType type)
-接口功能：判断某个采集项当前是否需要采集
-接口方向：采集模块内部
-输入参数名：记录的类型
-输出参数名：NA
-返回值：布尔值。
-注意事项：NA。
-```
+   ```tex
+   接口名：bool EventTraceManager::IsNeedTrace(const RecordType type)
+   接口功能：判断某个采集项当前是否需要采集
+   接口方向：采集模块内部
+   输入参数名：记录的类型
+   输出参数名：NA
+   返回值：布尔值。
+   注意事项：NA。
+   ```
 
-```
-接口名：bool EventReport::ReportXXX(RecordBuffer &infoBuffer)
-接口功能：将某个采集项从数据采集模块发送到框架模块
-接口方向：采集模块内部
-输入参数名：记录具体的信息
-输出参数名：NA
-返回值：布尔值。
-注意事项：NA。
-```
+   ```tex
+   接口名：bool EventReport::ReportXXX(RecordBuffer &infoBuffer)
+   接口功能：将某个采集项从数据采集模块发送到框架模块
+   接口方向：采集模块内部
+   输入参数名：记录具体的信息
+   输出参数名：NA
+   返回值：布尔值。
+   注意事项：NA。
+   ```
 
 ##### 4.2.5.3 数据分析模块
 
 1. 接口描述
 
-```
-数据采集模块主要有几大功能（接口）：  
-*分析模块的入口（抽象接口）
-*各个分析器的分析入口（具体接口）
-```
+   ```tex
+   数据采集模块主要有几大功能（接口）：  
+   *分析模块的入口（抽象接口）
+   *各个分析器的分析入口（具体接口）
+   ```
 
 2. 接口清单
 
-```
-接口名：void AnalyzerBase::EventHandle(std::shared_ptr<EventBase>& event, MemoryState* state) = 0;
-接口功能：分析模块对外的抽象接口
-接口方向：从框架模块到分析模块
-输入参数名：当前接收到的事件信息
-输出参数名：NA。
-返回值：NA。
-注意事项：NA。
-```
+   ```tex
+   接口名：void AnalyzerBase::EventHandle(std::shared_ptr<EventBase>& event, MemoryState* state) = 0;
+   接口功能：分析模块对外的抽象接口
+   接口方向：从框架模块到分析模块
+   输入参数名：当前接收到的事件信息
+   输出参数名：NA。
+   返回值：NA。
+   注意事项：NA。
+   ```
 
-```
-接口名：void Dump::EventHandle(std::shared_ptr<EventBase>& event, MemoryState* state)
-接口功能：dump模块的主要接口
-接口方向：从框架模块到分析模块
-输入参数名：当前接收到的事件信息
-输出参数名：NA。
-返回值：NA。
-注意事项：NA。
-```
+   ```tex
+   接口名：void Dump::EventHandle(std::shared_ptr<EventBase>& event, MemoryState* state)
+   接口功能：dump模块的主要接口
+   接口方向：从框架模块到分析模块
+   输入参数名：当前接收到的事件信息
+   输出参数名：NA。
+   返回值：NA。
+   注意事项：NA。
+   ```
 
-```
-接口名：void InefficientAnalyzer::EventHandle(std::shared_ptr<EventBase>& event, MemoryState* state)
-接口功能：低效显存模式识别的主要接口
-接口方向：从框架模块到分析模块
-输入参数名：当前接收到的事件信息
-输出参数名：内存块状态信息。
-返回值：NA。
-注意事项：NA。
-```
+   ```tex
+   接口名：void InefficientAnalyzer::EventHandle(std::shared_ptr<EventBase>& event, MemoryState* state)
+   接口功能：低效显存模式识别的主要接口
+   接口方向：从框架模块到分析模块
+   输入参数名：当前接收到的事件信息
+   输出参数名：内存块状态信息。
+   返回值：NA。
+   注意事项：NA。
+   ```
 
-```
-接口名：void DecomposeAnalyzer::EventHandle(std::shared_ptr<EventBase>& event, MemoryState* state)
-接口功能：显存拆解的主要接口
-接口方向：从框架模块到分析模块
-输入参数名：当前接收到的事件信息
-输出参数名：内存块状态信息。
-返回值：NA。
-注意事项：NA。
-```
+   ```tex
+   接口名：void DecomposeAnalyzer::EventHandle(std::shared_ptr<EventBase>& event, MemoryState* state)
+   接口功能：显存拆解的主要接口
+   接口方向：从框架模块到分析模块
+   输入参数名：当前接收到的事件信息
+   输出参数名：内存块状态信息。
+   返回值：NA。
+   注意事项：NA。
+   ```
 
 ### 4.3 算法实现
 
@@ -464,39 +466,39 @@ aclError aclFinalize()
 1. 测试工程设计
    UT目录test和源码csrc目录齐平，内部子目录和功能代码对称。
 
-```
-leaks
-|-- build
-   |-- build.py
-|-- csrc
-   |-- framework
-   |-- event_trace
-   |-- analysis
-   |-- main.cpp
-|-- output
-   |-- bin
-      |-- msleaks
-|-- test
-   |-- framework
-   |-- event_trace
-   |-- analysis
-   |-- test_main.cpp
-```
-
-冒烟工程目录如下：包含msleaks交付件目录（msleaks）、冒烟用例源码目录（csrc）、测试脚本目录   （testfile）以及产物和日志目录（workbench），workbench下的子目录和测试套一一对应，方便问题定位。
-
-```
-leaks_case
-|-- msleaks
+   ```tex
+   leaks
+   |-- build
+      |-- build.py
+   |-- csrc
+      |-- framework
+      |-- event_trace
+      |-- analysis
+      |-- main.cpp
    |-- output
-|-- csrc
-   |-- test_suit
-   |-- utils
-|-- testfile
-   |-- csvfile
-   |-- script
-|-- workbench
-```
+      |-- bin
+         |-- msleaks
+   |-- test
+      |-- framework
+      |-- event_trace
+      |-- analysis
+      |-- test_main.cpp
+   ```
+
+   冒烟工程目录如下：包含msleaks交付件目录（msleaks）、冒烟用例源码目录（csrc）、测试脚本目录   （testfile）以及产物和日志目录（workbench），workbench下的子目录和测试套一一对应，方便问题定位。
+
+   ```tex
+   leaks_case
+   |-- msleaks
+      |-- output
+   |-- csrc
+      |-- test_suit
+      |-- utils
+   |-- testfile
+      |-- csvfile
+      |-- script
+   |-- workbench
+   ```
 
 2. 物理设计
    不涉及。
@@ -539,5 +541,3 @@ NA
 
 每张npu卡对应一个client进行上报数据，工具进程为server接收所有卡的数据，进行汇总和分析。**因此并发模型设计为多生产者单消费者的模式。共享内存+无锁队列被认为是通信效率最高的进程间通信方式，也是本组件采用的通信方式。**从下图中可以看到，共享内存一共分为两段，第一段是server往client发送配置请求消息，全局只配置一次。另一段是client往server发送数据，会存在同时有多个npu所在的进程往共享内存中写入数据，这里采用无锁队列结合原子变量的方式确保多个npu写入时不会冲突。server侧采用一个常驻线程进行读取。每当多一个数据写入，tail往后挪一位，当有一个数据读出，head往后挪一位，当head=tail，认为队列中没有数据。
 ![image](./figures/511a0c05-0460-4695-95cb-d5841afb00c2.png)
-
-
