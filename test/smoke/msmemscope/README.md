@@ -27,5 +27,5 @@
         ├── aten_collection.py
         ├── describe.py
         ├── __init__.py
-        ├── _msmemscope.so
+        ├──_msmemscope.so
         └── optimizer_step_hook.py
