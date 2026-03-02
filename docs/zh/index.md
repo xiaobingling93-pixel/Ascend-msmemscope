@@ -123,7 +123,7 @@ api
 :caption: 💪 开发者指南
 :hidden:
 
-development_guide/development_guide
+development_guide
 ```
 
 ```{toctree}
@@ -131,5 +131,5 @@ development_guide/development_guide
 :caption: 🔍 交流指南
 :hidden:
 
-communication_guide/communication.md
+communication.md
 ```

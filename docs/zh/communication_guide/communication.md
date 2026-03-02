@@ -4,13 +4,13 @@
 
 ## 1. 提交Issues
 
-在GitCode仓库中提交[Issues](https://gitcode.com/Ascend/msmemscope/issues)是最直接的问题和建议反馈方式。请在提交Issue前，参考[issue提交指南](./how_to_issue.md)，提出符合规范的Issue，以提高我们的处理效率。
+在GitCode仓库中提交[Issues](https://gitcode.com/Ascend/msmemscope/issues)是最直接的问题和建议反馈方式。请在提交Issue前，参考[issue提交指南](./how_to_issue)，提出符合规范的Issue，以提高我们的处理效率。
 
 ## 2. 邮件联系
 
 如果您有更复杂或需要保密的问题，可以发送邮件至：
 
-**memscope@outlook.com**
+**<memscope@outlook.com>**
 
 请在邮件中详细描述您的问题或建议，我们会尽快回复。
 
@@ -22,4 +22,4 @@
 
 ## 4. 贡献代码
 
-如果您希望为项目贡献代码，请参考[贡献指南](./development_guide/contributing_guide.md)。
+如果您希望为项目贡献代码，请参考[贡献指南](../development_guide/contributing_guide)。

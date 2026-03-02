@@ -1,7 +1,7 @@
 import os
 import sys
 # 确保可以导入项目模块
-sys.path.insert(os.path.abspath('.'))
+sys.path.append(os.path.abspath('.'))
 
 # 项目信息
 project = 'MindStudio MemScope 内存工具'  # 项目名称
