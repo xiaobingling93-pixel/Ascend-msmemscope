@@ -482,28 +482,51 @@ log_error() {
 }
 
 # 设置安装目录
-CANN_INSTALL_DIR=../../../
+CANN_INSTALL_DIR=../../..
 MEMSCOPE_INSTALL_DIR="$CANN_INSTALL_DIR/tools/msmemscope"
 
 log_info "Uninstalling msmemscope from $MEMSCOPE_INSTALL_DIR"
 
 # 删除msmemscope安装目录下的所有内容
 if [ -d "$MEMSCOPE_INSTALL_DIR" ]; then
+    MEMSCOPE_PARENT_DIR=$(dirname "$MEMSCOPE_INSTALL_DIR")
+    MEMSCOPE_PARENT_PERM=$(stat -c '%a' "$MEMSCOPE_PARENT_DIR" 2>/dev/null || echo "")
+    if [ -n "$MEMSCOPE_PARENT_PERM" ] && [ ! -w "$MEMSCOPE_PARENT_DIR" ]; then
+        chmod u+w "$MEMSCOPE_PARENT_DIR"
+    fi
     rm -rf "$MEMSCOPE_INSTALL_DIR"
+    if [ -n "$MEMSCOPE_PARENT_PERM" ] && [ ! -w "$MEMSCOPE_PARENT_DIR" ] 2>/dev/null; then
+        chmod "$MEMSCOPE_PARENT_PERM" "$MEMSCOPE_PARENT_DIR"
+    fi
     log_info "Removed msmemscope installation directory"
 fi
 
 # 删除注册的卸载逻辑
 INSTALL_PARENT_DIR="$CANN_INSTALL_DIR"
 if [ -f "$INSTALL_PARENT_DIR/cann_uninstall.sh" ]; then
+    CANN_UNINSTALL_PERM=$(stat -c '%a' "$INSTALL_PARENT_DIR/cann_uninstall.sh" 2>/dev/null || echo "")
+    if [ -n "$CANN_UNINSTALL_PERM" ] && [ ! -w "$INSTALL_PARENT_DIR/cann_uninstall.sh" ]; then
+        chmod u+w "$INSTALL_PARENT_DIR/cann_uninstall.sh"
+    fi
     sed -i "/uninstall_package \"share\/info\/msmemscope\"/d" "$INSTALL_PARENT_DIR/cann_uninstall.sh"
+    if [ -n "$CANN_UNINSTALL_PERM" ]; then
+        chmod "$CANN_UNINSTALL_PERM" "$INSTALL_PARENT_DIR/cann_uninstall.sh"
+    fi
     log_info "Removed uninstallation registration from cann_uninstall.sh"
 fi
 
 # 删除share/info/msmemscope目录内容
 share_info_dir="$INSTALL_PARENT_DIR/share/info/msmemscope"
 if [ -d "$share_info_dir" ]; then
+    SHARE_INFO_PARENT_DIR=$(dirname "$share_info_dir")
+    SHARE_INFO_PARENT_PERM=$(stat -c '%a' "$SHARE_INFO_PARENT_DIR" 2>/dev/null || echo "")
+    if [ -n "$SHARE_INFO_PARENT_PERM" ] && [ ! -w "$SHARE_INFO_PARENT_DIR" ]; then
+        chmod u+w "$SHARE_INFO_PARENT_DIR"
+    fi
     rm -rf "$share_info_dir"
+    if [ -n "$SHARE_INFO_PARENT_PERM" ] && [ ! -w "$SHARE_INFO_PARENT_DIR" ] 2>/dev/null; then
+        chmod "$SHARE_INFO_PARENT_PERM" "$SHARE_INFO_PARENT_DIR"
+    fi
     log_info "Removed share/info/msmemscope directory"
 fi
 
@@ -959,6 +982,12 @@ uninstall_main() {
         log_error "Uninstall requires --install-path parameter"
         echo "Usage: $0 --uninstall --install-path=<path>"
         exit 1
+    fi
+    
+    # 如果install-path目录下存在cann_uninstall.sh，说明传入的是CANN根目录，需要追加tools子目录
+    if [ -f "$install_path/cann_uninstall.sh" ]; then
+        log_info "Detected CANN root directory, appending 'tools' to install path"
+        install_path="$install_path/tools"
     fi
     
     # 检查目标目录是否存在
